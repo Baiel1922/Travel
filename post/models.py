@@ -13,13 +13,12 @@ class Post(models.Model):
         return self.title
 
 
-class Saved(models.Model):
-    user = models.ForeignKey(User, related_name='saved_p', on_delete=models.CASCADE)
-    post = models.ForeignKey(Post, related_name='saved', on_delete=models.CASCADE)
-    saved = models.BooleanField(default=False)
+class Like(models.Model):
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='likes')
+    pin = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='likes')
 
-    def __str__(self):
-        return f'{self.saved}'
+    class Meta:
+        ordering = ['id']
 
 
 class PostImage(models.Model):
