@@ -3,14 +3,28 @@ from rest_framework.serializers import ModelSerializer
 
 from account.models import User
 from comment.serializers import CommentSerializer
-from post.models import Post, PostImage, Saved, Rating
+from post.models import Post, PostImage, Rating, Like
 from post.utils import get_rating
 
 
-class SavedSerializer(ModelSerializer):
+class LikeSerializer(ModelSerializer):
+    author = ReadOnlyField(source='author.email')
+
     class Meta:
-        model = Saved
+        model = Like
         fields = '__all__'
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        user = request.user
+        pin = validated_data.get('pin')
+
+        if Like.objects.filter(author=user, pin=pin):
+            like = Like.objects.get(author=user, pin=pin)
+            return like
+
+        like = Like.objects.create(author=user, **validated_data)
+        return like
 
 
 class PostSerializer(ModelSerializer):
@@ -23,7 +37,7 @@ class PostSerializer(ModelSerializer):
         representation['images'] = PostImageSerializer(instance.images.all(), many=True, context=self.context).data
         representation["comments"] = CommentSerializer(instance.comments.all(), many=True).data
         representation['rating'] = get_rating(representation.get('id'), Post)
-
+        representation['likes'] = instance.likes.count()
         return representation
 
 
